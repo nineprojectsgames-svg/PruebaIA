@@ -3,46 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Interface v2.0</title>
+    <title>AI Workspace - Professional Interface</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
-            --bg-color: #0b0e14;
-            --chat-bg: #151921;
-            --accent: #4f46e5;
-            --text: #e2e8f0;
+            --bg: #0f1117;
+            --sidebar: #161922;
+            --accent: #6366f1;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --user-bubble: #312e81;
+            --ai-bubble: #1e293b;
         }
 
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
             margin: 0;
             display: flex;
-            flex-direction: column;
             height: 100vh;
         }
 
-        /* Configuración superior */
+        /* Contenedor Principal */
+        #main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header */
         header {
-            padding: 1rem;
-            background: var(--chat-bg);
+            padding: 1rem 2rem;
+            background: var(--sidebar);
             border-bottom: 1px solid #2d3748;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        input#api-key {
-            background: #1a202c;
-            border: 1px solid #4a5568;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            width: 200px;
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
         }
 
-        /* Área de mensajes */
+        /* Área de Chat */
         #chat-window {
             flex: 1;
             overflow-y: auto;
@@ -50,144 +62,217 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        .msg-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
         }
 
         .msg {
-            max-width: 85%;
-            padding: 1rem;
-            border-radius: 12px;
+            max-width: 80%;
+            padding: 1rem 1.25rem;
+            border-radius: 15px;
             line-height: 1.6;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .user-msg {
             align-self: flex-end;
-            background: var(--accent);
-            color: white;
+            background: var(--user-bubble);
+            border-bottom-right-radius: 2px;
         }
 
         .ai-msg {
             align-self: flex-start;
-            background: var(--chat-bg);
-            border: 1px solid #2d3748;
+            background: var(--ai-bubble);
+            border-bottom-left-radius: 2px;
+            border: 1px solid #334155;
         }
 
-        /* Input inferior */
-        .input-area {
+        /* Markdown Styles */
+        pre { background: #000; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid #334155; }
+        code { font-family: 'Consolas', monospace; color: #fbbf24; }
+        p { margin: 0 0 1rem 0; }
+        p:last-child { margin-bottom: 0; }
+
+        /* Input Area */
+        .input-wrapper {
             padding: 2rem;
-            background: linear-gradient(transparent, var(--bg-color));
+            background: linear-gradient(transparent, var(--bg) 20%);
         }
 
-        .input-container {
-            max-width: 800px;
+        .input-box {
+            max-width: 900px;
             margin: 0 auto;
-            position: relative;
+            background: var(--sidebar);
+            border: 1px solid #334155;
+            border-radius: 16px;
             display: flex;
-            gap: 10px;
+            padding: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .input-box:focus-within {
+            border-color: var(--accent);
         }
 
         textarea {
-            width: 100%;
-            background: #1a202c;
-            border: 1px solid #4a5568;
+            flex: 1;
+            background: transparent;
+            border: none;
             color: white;
-            padding: 15px;
-            border-radius: 12px;
+            padding: 12px;
             resize: none;
             outline: none;
-            height: 50px;
+            font-size: 1rem;
+            max-height: 200px;
         }
 
-        button#send-btn {
+        #send-btn {
             background: var(--accent);
             border: none;
             color: white;
-            padding: 0 20px;
+            width: 45px;
+            height: 45px;
             border-radius: 12px;
             cursor: pointer;
-            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            align-self: flex-end;
         }
 
-        button#send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #send-btn:hover { filter: brightness(1.2); }
+        #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        pre { background: #000; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        /* Loader */
+        .typing {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <strong>AI Laboratory</strong>
-    <input type="password" id="api-key" placeholder="Pega tu API Key de Gemini aquí">
-</header>
+<div id="main-container">
+    <header>
+        <div><span class="status-dot"></span><strong>Gemini 1.5 Flash System</strong></div>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">API Conectada</div>
+    </header>
 
-<div id="chat-window">
-    <div class="msg ai-msg">Hola. Configura tu API Key arriba para empezar a hablar con una IA real.</div>
-</div>
+    <div id="chat-window">
+        <div class="msg-wrapper">
+            <div class="msg ai-msg">Sistema listo. ¿En qué puedo ayudarte con tu código o proyectos hoy?</div>
+        </div>
+    </div>
 
-<div class="input-area">
-    <div class="input-container">
-        <textarea id="user-input" placeholder="Pregunta lo que quieras..."></textarea>
-        <button id="send-btn">Enviar</button>
+    <div class="input-wrapper">
+        <div id="typing-indicator" class="typing">La IA está procesando...</div>
+        <div class="input-box">
+            <textarea id="user-input" rows="1" placeholder="Escribe tu mensaje aquí..."></textarea>
+            <button id="send-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
     </div>
 </div>
 
 <script>
+    // Configuración
+    const API_KEY = "AIzaSyBjfoG76EvgQ17DC6PrX7n2L4m5I5jsC6k"; // Tu llave integrada
     const chatWindow = document.getElementById('chat-window');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
-    const apiKeyInput = document.getElementById('api-key');
+    const typingIndicator = document.getElementById('typing-indicator');
 
-    async function callAI(prompt) {
-        const apiKey = apiKeyInput.value.trim();
-        if (!apiKey) return "Error: Por favor, introduce una API Key.";
+    // Memoria de la conversación
+    let chatHistory = [];
 
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-        try {
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
-
-            const data = await response.json();
-            return data.candidates[0].content.parts[0].text;
-        } catch (error) {
-            return "Error de conexión: Verifica tu llave o tu internet.";
-        }
-    }
-
-    function addMessage(content, isUser) {
-        const div = document.createElement('div');
-        div.classList.add('msg', isUser ? 'user-msg' : 'ai-msg');
-        
-        // Usamos marked para que el código y las negritas se vean bien
-        div.innerHTML = isUser ? content : marked.parse(content);
-        
-        chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    sendBtn.addEventListener('click', async () => {
-        const prompt = userInput.value.trim();
-        if (!prompt) return;
-
-        addMessage(prompt, true);
-        userInput.value = "";
-        sendBtn.disabled = true;
-
-        const aiResponse = await callAI(prompt);
-        addMessage(aiResponse, false);
-        
-        sendBtn.disabled = false;
+    // Ajuste automático de altura del textarea
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
     });
 
-    // Enviar con Enter
-    userInput.addEventListener('keypress', (e) => {
+async function fetchAIResponse(prompt) {
+    // CAMBIO CLAVE: Usamos 'v1' en lugar de 'v1beta' y el nombre de modelo estándar
+    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    
+    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: chatHistory })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            // Si el error es por la API Key, aquí te lo dirá claramente en la consola
+            throw new Error(errorData.error.message || "Error en la API");
+        }
+
+        const data = await response.json();
+        const aiText = data.candidates[0].content.parts[0].text;
+        chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+        return aiText;
+
+    } catch (error) {
+        console.error("Detalle:", error);
+        return "Error: " + error.message;
+    }
+}
+    function addMessageToUI(content, isUser) {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('msg-wrapper');
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('msg', isUser ? 'user-msg' : 'ai-msg');
+        
+        // Renderizar Markdown si es la IA, texto plano si es el usuario
+        msgDiv.innerHTML = isUser ? content : marked.parse(content);
+        
+        wrapper.appendChild(msgDiv);
+        chatWindow.appendChild(wrapper);
+        
+        // Scroll automático
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+    }
+
+    async function handleAction() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // UI Update
+        addMessageToUI(text, true);
+        userInput.value = "";
+        userInput.style.height = 'auto';
+        sendBtn.disabled = true;
+        typingIndicator.style.display = "block";
+
+        // Call API
+        const response = await fetchAIResponse(text);
+        
+        typingIndicator.style.display = "none";
+        addMessageToUI(response, false);
+        sendBtn.disabled = false;
+    }
+
+    // Eventos
+    sendBtn.addEventListener('click', handleAction);
+
+    userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendBtn.click();
+            handleAction();
         }
     });
 </script>
