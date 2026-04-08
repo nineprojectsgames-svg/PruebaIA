@@ -3,300 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Workspace - Professional Interface</title>
+    <title>AI Chat Pro - Final Version</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --bg: #0f1117;
-            --sidebar: #161922;
-            --accent: #6366f1;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --user-bubble: #312e81;
-            --ai-bubble: #1e293b;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            height: 100vh;
-        }
-
-        /* Contenedor Principal */
-        #main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* Header */
-        header {
-            padding: 1rem 2rem;
-            background: var(--sidebar);
-            border-bottom: 1px solid #2d3748;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .status-dot {
-            height: 10px;
-            width: 10px;
-            background-color: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-
-        /* Área de Chat */
-        #chat-window {
-            flex: 1;
-            overflow-y: auto;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            scroll-behavior: smooth;
-        }
-
-        .msg-wrapper {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
-
-        .msg {
-            max-width: 80%;
-            padding: 1rem 1.25rem;
-            border-radius: 15px;
-            line-height: 1.6;
-            font-size: 0.95rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .user-msg {
-            align-self: flex-end;
-            background: var(--user-bubble);
-            border-bottom-right-radius: 2px;
-        }
-
-        .ai-msg {
-            align-self: flex-start;
-            background: var(--ai-bubble);
-            border-bottom-left-radius: 2px;
-            border: 1px solid #334155;
-        }
-
-        /* Markdown Styles */
-        pre { background: #000; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid #334155; }
-        code { font-family: 'Consolas', monospace; color: #fbbf24; }
-        p { margin: 0 0 1rem 0; }
-        p:last-child { margin-bottom: 0; }
-
-        /* Input Area */
-        .input-wrapper {
-            padding: 2rem;
-            background: linear-gradient(transparent, var(--bg) 20%);
-        }
-
-        .input-box {
-            max-width: 900px;
-            margin: 0 auto;
-            background: var(--sidebar);
-            border: 1px solid #334155;
-            border-radius: 16px;
-            display: flex;
-            padding: 8px;
-            transition: border-color 0.2s;
-        }
-
-        .input-box:focus-within {
-            border-color: var(--accent);
-        }
-
-        textarea {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: white;
-            padding: 12px;
-            resize: none;
-            outline: none;
-            font-size: 1rem;
-            max-height: 200px;
-        }
-
-        #send-btn {
-            background: var(--accent);
-            border: none;
-            color: white;
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-            align-self: flex-end;
-        }
-
-        #send-btn:hover { filter: brightness(1.2); }
-        #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* Loader */
-        .typing {
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-bottom: 10px;
-            display: none;
-        }
+        :root { --bg: #0d1117; --card: #161b22; --accent: #238636; --text: #c9d1d9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        header { background: var(--card); padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; font-size: 15px; }
+        .user { align-self: flex-end; background: #21262d; border: 1px solid #30363d; }
+        .ai { align-self: flex-start; background: #161b22; border: 1px solid #30363d; color: #e6edf3; }
+        
+        .input-area { padding: 20px; background: var(--bg); border-top: 1px solid #30363d; }
+        .container { max-width: 800px; margin: 0 auto; display: flex; gap: 10px; }
+        
+        textarea { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: white; padding: 12px; resize: none; outline: none; height: 45px; }
+        button { background: var(--accent); color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button:disabled { opacity: 0.5; }
+        
+        pre { background: #000; padding: 10px; border-radius: 6px; overflow-x: auto; }
+        code { color: #79c0ff; }
     </style>
 </head>
 <body>
 
-<div id="main-container">
-    <header>
-        <div><span class="status-dot"></span><strong>Gemini 1.5 Flash System</strong></div>
-        <div style="font-size: 0.8rem; color: var(--text-dim);">API Conectada</div>
-    </header>
+<header>
+    <strong>Gemini AI Interface</strong>
+    <span id="status" style="font-size: 12px; color: #8b949e;">Listo</span>
+</header>
 
-    <div id="chat-window">
-        <div class="msg-wrapper">
-            <div class="msg ai-msg">Sistema listo. ¿En qué puedo ayudarte con tu código o proyectos hoy?</div>
-        </div>
-    </div>
+<div id="chat-box">
+    <div class="message ai">¡Hola! He reiniciado el sistema. Pega tu API Key en el código y dime algo para probar la conexión.</div>
+</div>
 
-    <div class="input-wrapper">
-        <div id="typing-indicator" class="typing">La IA está procesando...</div>
-        <div class="input-box">
-            <textarea id="user-input" rows="1" placeholder="Escribe tu mensaje aquí..."></textarea>
-            <button id="send-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-        </div>
+<div class="input-area">
+    <div class="container">
+        <textarea id="input" placeholder="Escribe un mensaje..."></textarea>
+        <button id="send">Enviar</button>
     </div>
 </div>
 
 <script>
-    // Configuración
-    const API_KEY = "AIzaSyBjfoG76EvgQ17DC6PrX7n2L4m5I5jsC6k"; // Tu llave integrada
-    const chatWindow = document.getElementById('chat-window');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    const typingIndicator = document.getElementById('typing-indicator');
-
-    // Memoria de la conversación
-    let chatHistory = [];
-
-    // Ajuste automático de altura del textarea
-    userInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
-
-async function fetchAIResponse(prompt) {
-    // Intentamos con la ruta estable y el modelo 'gemini-pro' 
-    // que es el que menos errores de "modelo no encontrado" suele dar.
-    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
+    // Configuración - PEGA TU KEY AQUÍ
+    const API_KEY = "AIzaSyBjfoG76EvgQ17DC6PrX7n2L4m5I5jsC6k"; 
     
-    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('input');
+    const btn = document.getElementById('send');
+    const status = document.getElementById('status');
 
-    try {
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                contents: chatHistory 
-            })
+    let history = [];
+
+    async function tryFetch(url, body) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
         });
+        return res;
+    }
 
-        const data = await response.json();
+    async function getAIResponse(userText) {
+        status.innerText = "Pensando...";
+        btn.disabled = true;
 
-        if (data.error) {
-            // Si gemini-pro también falla, intentamos el fallback automático a gemini-1.5-flash
-            console.warn("Fallo gemini-pro, intentando flash...");
-            return await fetchFlashFallback(prompt);
+        // Añadimos al historial
+        history.push({ role: "user", parts: [{ text: userText }] });
+
+        const payload = { contents: history };
+        
+        // LISTA DE INTENTOS (Diferentes versiones y nombres de modelo)
+        const endpoints = [
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`
+        ];
+
+        let finalData = null;
+
+        for (let url of endpoints) {
+            try {
+                const response = await tryFetch(url, payload);
+                if (response.ok) {
+                    finalData = await response.json();
+                    break; // Si funciona, salimos del bucle
+                }
+            } catch (e) {
+                console.log("Fallo en: " + url);
+            }
         }
 
-        if (data.candidates && data.candidates[0].content) {
-            const aiText = data.candidates[0].content.parts[0].text;
-            chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+        if (finalData && finalData.candidates) {
+            const aiText = finalData.candidates[0].content.parts[0].text;
+            history.push({ role: "model", parts: [{ text: aiText }] });
+            status.innerText = "En línea";
+            btn.disabled = false;
             return aiText;
         } else {
-            throw new Error("Respuesta vacía de la IA");
+            status.innerText = "Error de conexión";
+            btn.disabled = false;
+            return "Lo siento, la API sigue rechazando la conexión. Revisa si tu API Key es válida para Gemini 1.5 Flash en AI Studio.";
         }
-
-    } catch (error) {
-        return "Error: " + error.message;
-    }
-}
-
-// Función de respaldo por si el modelo pro no está en tu región
-async function fetchFlashFallback(prompt) {
-    const FALLBACK_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-    const response = await fetch(FALLBACK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: chatHistory })
-    });
-    const data = await response.json();
-    if (data.error) return "Error crítico: " + data.error.message;
-    const text = data.candidates[0].content.parts[0].text;
-    chatHistory.push({ role: "model", parts: [{ text: text }] });
-    return text;
-}
-    function addMessageToUI(content, isUser) {
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('msg-wrapper');
-        
-        const msgDiv = document.createElement('div');
-        msgDiv.classList.add('msg', isUser ? 'user-msg' : 'ai-msg');
-        
-        // Renderizar Markdown si es la IA, texto plano si es el usuario
-        msgDiv.innerHTML = isUser ? content : marked.parse(content);
-        
-        wrapper.appendChild(msgDiv);
-        chatWindow.appendChild(wrapper);
-        
-        // Scroll automático
-        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
     }
 
-    async function handleAction() {
-        const text = userInput.value.trim();
-        if (!text) return;
-
-        // UI Update
-        addMessageToUI(text, true);
-        userInput.value = "";
-        userInput.style.height = 'auto';
-        sendBtn.disabled = true;
-        typingIndicator.style.display = "block";
-
-        // Call API
-        const response = await fetchAIResponse(text);
-        
-        typingIndicator.style.display = "none";
-        addMessageToUI(response, false);
-        sendBtn.disabled = false;
+    function addMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = `message ${type}`;
+        div.innerHTML = type === 'ai' ? marked.parse(text) : text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Eventos
-    sendBtn.addEventListener('click', handleAction);
+    async function handle() {
+        const text = input.value.trim();
+        if(!text) return;
+        
+        addMessage(text, 'user');
+        input.value = '';
+        
+        const response = await getAIResponse(text);
+        addMessage(response, 'ai');
+    }
 
-    userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleAction();
-        }
-    });
+    btn.addEventListener('click', handle);
+    input.addEventListener('keypress', (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handle(); } });
 </script>
 
 </body>
