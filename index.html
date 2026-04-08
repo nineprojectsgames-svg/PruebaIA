@@ -202,9 +202,9 @@
     });
 
 async function fetchAIResponse(prompt) {
-    // URL DEFINITIVA: Usamos v1beta (que es la que soporta Flash actualmente) 
-    // pero con el endpoint corregido.
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // Intentamos con la ruta estable y el modelo 'gemini-pro' 
+    // que es el que menos errores de "modelo no encontrado" suele dar.
+    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
     
     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
 
@@ -219,9 +219,10 @@ async function fetchAIResponse(prompt) {
 
         const data = await response.json();
 
-        // Si hay un error en la respuesta (como API Key inválida o cuota superada)
         if (data.error) {
-            throw new Error(data.error.message);
+            // Si gemini-pro también falla, intentamos el fallback automático a gemini-1.5-flash
+            console.warn("Fallo gemini-pro, intentando flash...");
+            return await fetchFlashFallback(prompt);
         }
 
         if (data.candidates && data.candidates[0].content) {
@@ -229,13 +230,27 @@ async function fetchAIResponse(prompt) {
             chatHistory.push({ role: "model", parts: [{ text: aiText }] });
             return aiText;
         } else {
-            throw new Error("La IA no devolvió una respuesta válida.");
+            throw new Error("Respuesta vacía de la IA");
         }
 
     } catch (error) {
-        console.error("Error completo:", error);
         return "Error: " + error.message;
     }
+}
+
+// Función de respaldo por si el modelo pro no está en tu región
+async function fetchFlashFallback(prompt) {
+    const FALLBACK_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    const response = await fetch(FALLBACK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: chatHistory })
+    });
+    const data = await response.json();
+    if (data.error) return "Error crítico: " + data.error.message;
+    const text = data.candidates[0].content.parts[0].text;
+    chatHistory.push({ role: "model", parts: [{ text: text }] });
+    return text;
 }
     function addMessageToUI(content, isUser) {
         const wrapper = document.createElement('div');
