@@ -325,7 +325,7 @@
       </select>
     </div>
     <div class="config-note">
-      ⚠️ Tu clave se guarda solo en este navegador. Para evitar CORS, usa un proxy o extensión (ver README).
+      ⚠️ Tu clave se guarda solo en este navegador. Para evitar CORS, usa un proxy o extensión.
     </div>
     <div class="config-actions">
       <button class="btn btn-secondary" id="clearStorageBtn">🗑️ Borrar datos guardados</button>
@@ -373,8 +373,14 @@
     const connectionStatus = document.getElementById('connectionStatus');
     const errorDisplay = document.getElementById('errorDisplay');
 
+    // --- Función para limpiar caracteres no ASCII de la API key ---
+    function sanitizeApiKey(key) {
+      // Solo permite caracteres imprimibles ASCII (códigos 32-126)
+      return key.replace(/[^\x20-\x7E]/g, '');
+    }
+
     // --- estado ---
-    let apiKey = localStorage.getItem('openai_api_key') || '';
+    let apiKey = sanitizeApiKey(localStorage.getItem('openai_api_key') || '');
     let apiEndpoint = localStorage.getItem('openai_endpoint') || 'https://api.openai.com/v1/chat/completions';
     let model = localStorage.getItem('openai_model') || 'gpt-3.5-turbo';
     
@@ -401,11 +407,18 @@
       }
     }
 
-    // --- guardar configuración ---
+    // --- guardar configuración (con sanitización) ---
     function saveConfig() {
-      const newKey = apiKeyInput.value.trim();
+      let newKey = apiKeyInput.value.trim();
       const newEndpoint = endpointInput.value.trim();
       const newModel = modelSelect.value;
+
+      // Sanitizar API key para evitar errores de fetch
+      const sanitizedKey = sanitizeApiKey(newKey);
+      if (sanitizedKey !== newKey) {
+        showTemporaryMessage('⚠️ Se eliminaron caracteres no válidos de la API key (solo ASCII permitido)', 'error');
+      }
+      newKey = sanitizedKey;
 
       if (!newEndpoint) {
         alert('La URL del endpoint es obligatoria.');
@@ -420,6 +433,8 @@
       localStorage.setItem('openai_endpoint', apiEndpoint);
       localStorage.setItem('openai_model', model);
 
+      // Actualizar input con la versión limpia
+      apiKeyInput.value = apiKey;
       updateConnectionStatus();
       configPanel.classList.remove('visible');
       showTemporaryMessage('✅ Configuración guardada', 'success');
@@ -466,7 +481,6 @@
       messageDiv.appendChild(bubble);
       chatMessages.appendChild(messageDiv);
       
-      // scroll hacia abajo
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
@@ -484,12 +498,10 @@
 
     // --- limpiar chat (mantiene sistema) ---
     function clearChat() {
-      // resetear historial a solo system prompt
       conversationHistory = [
         { role: 'system', content: 'Eres un asistente útil, claro y conciso. Responde en español.' }
       ];
       chatMessages.innerHTML = '';
-      // mensaje de bienvenida
       addMessage('bot', 'Chat limpio. ¿En qué puedo ayudarte?');
     }
 
@@ -498,26 +510,30 @@
       const userMessage = userInput.value.trim();
       if (!userMessage) return;
 
+      // Asegurar que la API key esté sanitizada antes de usarla
+      const cleanKey = sanitizeApiKey(apiKey);
+      if (cleanKey !== apiKey) {
+        apiKey = cleanKey;
+        localStorage.setItem('openai_api_key', apiKey);
+        apiKeyInput.value = apiKey;
+      }
+
       if (!apiKey || apiKey.length < 10) {
         showTemporaryMessage('❌ Falta la API Key. Configúrala en Ajustes.', 'error');
         configPanel.classList.add('visible');
         return;
       }
 
-      // deshabilitar input mientras se procesa
       userInput.disabled = true;
       sendBtn.disabled = true;
       errorDisplay.textContent = '';
 
-      // agregar mensaje de usuario al chat y al historial
       addMessage('user', userMessage);
       conversationHistory.push({ role: 'user', content: userMessage });
       
-      // limpiar input
       userInput.value = '';
       userInput.style.height = 'auto';
 
-      // mostrar indicador "escribiendo..."
       const typingId = 'typing-' + Date.now();
       const typingDiv = document.createElement('div');
       typingDiv.id = typingId;
@@ -527,7 +543,6 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
       try {
-        // construir cuerpo de la petición (OpenAI compatible)
         const payload = {
           model: model,
           messages: conversationHistory,
@@ -539,12 +554,12 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            // Usar la clave sanitizada (solo ASCII)
             'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify(payload)
         });
 
-        // eliminar indicador "escribiendo"
         const typingElement = document.getElementById(typingId);
         if (typingElement) typingElement.remove();
 
@@ -560,17 +575,14 @@
         const data = await response.json();
         const botReply = data.choices?.[0]?.message?.content || '[Sin respuesta]';
         
-        // agregar respuesta al chat y al historial
         addMessage('bot', botReply);
         conversationHistory.push({ role: 'assistant', content: botReply });
 
-        // limpiar errores
         errorDisplay.textContent = '';
         updateConnectionStatus();
 
       } catch (error) {
         console.error(error);
-        // eliminar typing si aún existe
         const typingEl = document.getElementById(typingId);
         if (typingEl) typingEl.remove();
         
@@ -580,9 +592,6 @@
         }
         addSystemMessage('⚠️ ' + errorMsg);
         showTemporaryMessage(errorMsg, 'error');
-        
-        // quitar el último mensaje de usuario del historial? mejor dejarlo, pero no hay respuesta.
-        // opcional: podríamos remover el último user, pero es más natural dejarlo.
       } finally {
         userInput.disabled = false;
         sendBtn.disabled = false;
@@ -617,30 +626,21 @@
     
     userInput.addEventListener('input', autoResizeTextarea);
 
-    // Cerrar panel con Escape (opcional)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && configPanel.classList.contains('visible')) {
         configPanel.classList.remove('visible');
       }
     });
 
-    // Al cargar, si no hay apiKey, mostrar panel de ajustes suavemente
     if (!apiKey) {
       setTimeout(() => {
         configPanel.classList.add('visible');
       }, 500);
     }
 
-    // Limpiar mensajes de error antiguos al escribir nueva config
     apiKeyInput.addEventListener('focus', () => errorDisplay.textContent = '');
     endpointInput.addEventListener('focus', () => errorDisplay.textContent = '');
-
-    // Cargar conversación inicial (solo mensaje bot)
-    // (ya está en HTML)
   })();
 </script>
-<!-- Nota sobre CORS: OpenAI bloquea peticiones desde navegador.
-     Soluciones: usar un proxy (p.ej. https://corsproxy.io/?) o extensión "CORS Unblock".
-     Para pruebas locales con Ollama/LM Studio, cambia el endpoint a http://localhost:11434/v1/chat/completions -->
 </body>
 </html>
