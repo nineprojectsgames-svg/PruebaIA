@@ -158,39 +158,54 @@
         }
 
         process(input) {
-            const text = input.toLowerCase().trim();
-            const words = text.split(/\s+/);
+    const text = input.toLowerCase().trim();
+    const words = text.split(/\s+/).map(w => w.replace(/[.,!]/g, ""));
+    
+    // 1. APRENDIZAJE SELECTIVO (Solo conceptos de más de 3 letras)
+    const conectores = ["esta", "este", "para", "pero", "como", "unos", "unas", "todo"];
+    words.forEach((word, index) => {
+        if (word.length > 3 && !conectores.includes(word)) {
+            if (!this.memory.conceptos[word]) this.memory.conceptos[word] = [];
             
-            // 1. Aprender: Guardar relación entre palabras
-            words.forEach((word, index) => {
-                if (word.length > 3) {
-                    if (!this.memory.conceptos[word]) this.memory.conceptos[word] = [];
-                    // Guarda la palabra siguiente para crear contexto
-                    if (words[index + 1]) this.memory.conceptos[word].push(words[index + 1]);
+            // Busca los siguientes 2 conceptos importantes para crear cadenas más ricas
+            for (let i = index + 1; i < index + 3 && i < words.length; i++) {
+                let next = words[i].replace(/[.,!]/g, "");
+                if (next.length > 3 && !conectores.includes(next)) {
+                    this.memory.conceptos[word].push(next);
                 }
-            });
-
-            // 2. Generar respuesta
-            let response = "";
-
-            // Buscar si conocemos alguna palabra del input
-            const knownWords = words.filter(w => this.memory.conceptos[w]);
-
-            if (knownWords.length > 0) {
-                const seed = knownWords[Math.floor(Math.random() * knownWords.length)];
-                const associations = this.memory.conceptos[seed];
-                const next = associations[Math.floor(Math.random() * associations.length)];
-                
-                response = `Al hablar de "${seed}", mi base de datos sugiere "${next}". ¿Qué conexión hay entre ellas?`;
-            } else {
-                // Si no sabe nada, responde con curiosidad
-                response = this.memory.desconocido[Math.floor(Math.random() * this.memory.desconocido.length)];
             }
-
-            this.save();
-            return response;
         }
+    });
+
+    // 2. GENERACIÓN DE RESPUESTA VARIADA
+    const known = words.filter(w => this.memory.conceptos[w] && this.memory.conceptos[w].length > 0);
+    
+    if (known.length > 0) {
+        const seed = known[Math.floor(Math.random() * known.length)];
+        const ideas = this.memory.conceptos[seed];
+        const idea = ideas[Math.floor(Math.random() * ideas.length)];
+        
+        // Estilos de respuesta para que no sea repetitiva
+        const estilos = [
+            `Interesante... El concepto "${seed}" me lleva a pensar en "${idea}". ¿Crees que están relacionados por la lógica o por el diseño?`,
+            `He procesado "${seed}" anteriormente. En mi red neuronal, esto conecta directamente con "${idea}". ¿Qué opinas de esa unión?`,
+            `Si analizamos "${seed}", tarde o temprano terminamos en "${idea}". Es un patrón que estoy empezando a notar.`,
+            `¿Sabías que mi memoria asocia "${seed}" con "${idea}"? Mi sistema está evolucionando gracias a lo que me cuentas.`,
+            `Me genera curiosidad: cuando mencionas "${seed}", mi base de datos resalta "${idea}". Explícame más sobre esto.`
+        ];
+        
+        this.save();
+        return estilos[Math.floor(Math.random() * estilos.length)];
+    } else {
+        const frasesDuda = [
+            "Eso no lo tenía registrado. Cuéntame más para expandir mi red.",
+            "Palabra nueva detectada. ¿Cómo encaja eso en lo que ya sabemos?",
+            "Interesante término. ¿Tiene algo que ver con el SEO o los videojuegos?",
+            "Mi memoria está en blanco con eso. Dame un poco de contexto."
+        ];
+        return frasesDuda[Math.floor(Math.random() * frasesDuda.length)];
     }
+}
 
     const brain = new NeuralNetwork();
     const chatFlow = document.getElementById('chat-flow');
