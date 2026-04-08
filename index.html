@@ -3,81 +3,493 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat IA Gratuito (con Puter.js)</title>
+  <title>ChatIA Pro · 6 Mejoras Integradas</title>
+  <!-- Transformers.js para RAG en el navegador -->
+  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js"></script>
+  <!-- Puter.js para chat gratuito -->
+  <script src="https://js.puter.com/v2/"></script>
   <style>
-    /* --- ESTILOS (Mantenidos para que se vea bien) --- */
-    * { box-sizing: border-box; margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; }
-    body { background: #f4f7fb; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 16px; margin: 0; }
-    .chat-wrapper { width: 100%; max-width: 820px; height: 90vh; max-height: 800px; background: white; border-radius: 28px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 6px 12px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; overflow: hidden; backdrop-filter: blur(2px); border: 1px solid rgba(255, 255, 255, 0.5); }
-    .chat-header { padding: 18px 24px; background: white; border-bottom: 1px solid #e9ecf0; display: flex; align-items: center; justify-content: space-between; }
-    .chat-header h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
-    .chat-header h1 span { background: #10a37f; color: white; font-size: 0.8rem; padding: 2px 10px; border-radius: 40px; font-weight: 500; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 24px 24px 12px 24px; display: flex; flex-direction: column; gap: 18px; background: #ffffff; scroll-behavior: smooth; }
-    .message { display: flex; gap: 12px; max-width: 85%; animation: fadeIn 0.2s ease; }
-    .message.user { align-self: flex-end; flex-direction: row-reverse; }
-    .message.bot { align-self: flex-start; }
-    .avatar { width: 36px; height: 36px; border-radius: 40px; background: #eef2ff; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #1e293b; flex-shrink: 0; }
-    .message.user .avatar { background: #10a37f; color: white; }
-    .bubble { background: #f1f5f9; padding: 12px 18px; border-radius: 22px; border-bottom-right-radius: 6px; line-height: 1.5; color: #0f172a; font-size: 0.95rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03); word-break: break-word; }
-    .message.user .bubble { background: #10a37f; color: white; border-bottom-right-radius: 22px; border-bottom-left-radius: 6px; }
-    .message.bot .bubble { border-bottom-left-radius: 6px; }
-    .chat-input-area { padding: 18px 24px; background: white; border-top: 1px solid #e9ecf0; display: flex; gap: 10px; align-items: flex-end; }
-    .chat-input-area textarea { flex: 1; border: 1.5px solid #e2e8f0; border-radius: 28px; padding: 12px 18px; font-size: 0.95rem; resize: none; max-height: 120px; min-height: 52px; background: #fafcff; transition: border 0.2s; line-height: 1.4; }
-    .chat-input-area textarea:focus { outline: none; border-color: #10a37f; background: white; }
-    .send-btn { background: #10a37f; border: none; width: 52px; height: 52px; border-radius: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.15s; color: white; font-size: 1.6rem; font-weight: 400; box-shadow: 0 6px 10px rgba(16, 163, 127, 0.2); flex-shrink: 0; }
-    .send-btn:hover { background: #0e8e6e; transform: scale(0.98); }
-    .send-btn:disabled { opacity: 0.5; pointer-events: none; background: #94a3b8; }
-    .status-indicator { font-size: 0.75rem; color: #64748b; padding: 0 24px 6px; display: flex; justify-content: space-between; }
-    .clear-btn { background: none; border: none; color: #64748b; cursor: pointer; font-size: 0.8rem; text-decoration: underline; padding: 4px 8px; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: #f4f7fb;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      margin: 0;
+    }
+    .chat-wrapper {
+      width: 100%;
+      max-width: 900px;
+      height: 90vh;
+      max-height: 850px;
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.05), 0 6px 12px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+    .chat-header {
+      padding: 16px 24px;
+      background: white;
+      border-bottom: 1px solid #e9ecf0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-header h1 span {
+      background: #10a37f;
+      color: white;
+      font-size: 0.8rem;
+      padding: 2px 10px;
+      border-radius: 40px;
+      font-weight: 500;
+    }
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .icon-btn {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 40px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      border: 1px solid #e2e8f0;
+    }
+    .icon-btn:hover {
+      background: #e2e8f0;
+    }
+    .config-panel {
+      background: #fafcff;
+      padding: 18px 24px;
+      border-bottom: 1px solid #e9ecf0;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .config-panel.visible {
+      display: flex;
+    }
+    .config-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+    }
+    .config-row label {
+      font-weight: 500;
+      color: #334155;
+      min-width: 100px;
+      font-size: 0.9rem;
+    }
+    .config-row select, .config-row input[type="file"] {
+      flex: 1 1 220px;
+      padding: 10px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 18px;
+      font-size: 0.9rem;
+      background: white;
+    }
+    .rag-section {
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 12px;
+      margin-top: 8px;
+    }
+    .rag-status {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-left: 116px;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 24px 12px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: #ffffff;
+      scroll-behavior: smooth;
+    }
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 85%;
+      animation: fadeIn 0.2s ease;
+      position: relative;
+    }
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message.bot {
+      align-self: flex-start;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 40px;
+      background: #eef2ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #1e293b;
+      flex-shrink: 0;
+    }
+    .message.user .avatar {
+      background: #10a37f;
+      color: white;
+    }
+    .bubble {
+      background: #f1f5f9;
+      padding: 12px 18px;
+      border-radius: 22px;
+      border-bottom-right-radius: 6px;
+      line-height: 1.5;
+      color: #0f172a;
+      font-size: 0.95rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      word-break: break-word;
+      position: relative;
+    }
+    .message.user .bubble {
+      background: #10a37f;
+      color: white;
+      border-bottom-right-radius: 22px;
+      border-bottom-left-radius: 6px;
+    }
+    .message.bot .bubble {
+      border-bottom-left-radius: 6px;
+    }
+    .bubble-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      justify-content: flex-end;
+    }
+    .bubble-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: inherit;
+      backdrop-filter: blur(4px);
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .message.user .bubble-btn {
+      background: rgba(0,0,0,0.1);
+    }
+    .message.bot .bubble-btn {
+      background: rgba(0,0,0,0.05);
+    }
+    .bubble-btn:hover {
+      background: rgba(0,0,0,0.15);
+    }
+    .chat-input-area {
+      padding: 18px 24px;
+      background: white;
+      border-top: 1px solid #e9ecf0;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .chat-input-area textarea {
+      flex: 1;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 28px;
+      padding: 12px 18px;
+      font-size: 0.95rem;
+      resize: none;
+      max-height: 120px;
+      min-height: 52px;
+      background: #fafcff;
+      transition: border 0.2s;
+      line-height: 1.4;
+    }
+    .chat-input-area textarea:focus {
+      outline: none;
+      border-color: #10a37f;
+      background: white;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .send-btn, .mic-btn {
+      background: #10a37f;
+      border: none;
+      width: 52px;
+      height: 52px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.15s;
+      color: white;
+      font-size: 1.6rem;
+      box-shadow: 0 6px 10px rgba(16,163,127,0.2);
+      flex-shrink: 0;
+    }
+    .mic-btn {
+      background: #64748b;
+      box-shadow: none;
+      font-size: 1.4rem;
+    }
+    .mic-btn.recording {
+      background: #dc2626;
+      animation: pulse 1.5s infinite;
+    }
+    .send-btn:hover, .mic-btn:hover {
+      transform: scale(0.98);
+    }
+    .send-btn:disabled, .mic-btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      background: #94a3b8;
+    }
+    .status-bar {
+      font-size: 0.75rem;
+      color: #64748b;
+      padding: 0 24px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .memory-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .clear-btn {
+      background: none;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      padding: 4px 8px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    .toast-info {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
 <div class="chat-wrapper">
   <div class="chat-header">
-    <h1>🤖 ChatIA <span>¡Gratis y sin API Key!</span></h1>
-  </div>
-
-  <!-- Mensajes del chat -->
-  <div class="chat-messages" id="chatMessages">
-    <div class="message bot">
-      <div class="avatar">🤖</div>
-      <div class="bubble">¡Hola! Soy un chat de IA gratuito impulsado por Puter.js.<br>Pregúntame lo que quieras. No necesitas ninguna clave API.</div>
+    <h1>🤖 ChatIA Pro <span>6 Mejoras</span></h1>
+    <div class="header-actions">
+      <button class="icon-btn" id="toggleConfigBtn" title="Configuración y RAG">⚙️ Ajustes</button>
+      <button class="icon-btn" id="newChatBtn" title="Nueva conversación">✨ Nuevo Chat</button>
     </div>
   </div>
 
-  <div class="status-indicator">
-    <span id="connectionStatus">✅ Conectado (Puter.js)</span>
-    <button class="clear-btn" id="clearChatBtn">🧹 Limpiar chat</button>
+  <!-- Panel de configuración (Modelo + RAG) -->
+  <div class="config-panel" id="configPanel">
+    <div class="config-row">
+      <label>🧠 Modelo IA</label>
+      <select id="modelSelect">
+        <option value="gpt-4o-mini">GPT-4o mini (rápido)</option>
+        <option value="gpt-4.1-nano">GPT-4.1 Nano (económico)</option>
+        <option value="claude-haiku-3.5">Claude Haiku 3.5</option>
+        <option value="google/gemini-2.0-flash">Gemini 2.0 Flash</option>
+        <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1 8B</option>
+      </select>
+    </div>
+    <div class="rag-section">
+      <div class="config-row">
+        <label>📚 RAG (Conocimiento local)</label>
+        <input type="file" id="ragFileInput" accept=".txt,.md,.pdf,application/pdf" multiple>
+      </div>
+      <div class="rag-status" id="ragStatus">No hay documentos cargados.</div>
+      <div style="margin-left: 116px; margin-top: 8px;">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="useRagCheckbox"> Usar conocimiento de documentos en respuestas
+        </label>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+      <button class="icon-btn" id="clearRagBtn">🗑️ Limpiar documentos</button>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div class="chat-messages" id="chatMessages">
+    <!-- El historial se cargará desde memoria -->
+  </div>
+
+  <!-- Barra de estado -->
+  <div class="status-bar">
+    <div class="memory-indicator">
+      <span id="memoryStatus">💾 Memoria activa</span>
+    </div>
+    <button class="clear-btn" id="clearChatBtn">🧹 Limpiar pantalla</button>
   </div>
 
   <!-- Área de input -->
   <div class="chat-input-area">
     <textarea id="userInput" placeholder="Escribe tu mensaje..." rows="1"></textarea>
-    <button class="send-btn" id="sendBtn" title="Enviar">➤</button>
+    <div class="action-buttons">
+      <button class="mic-btn" id="micBtn" title="Dictar por voz">🎤</button>
+      <button class="send-btn" id="sendBtn" title="Enviar">➤</button>
+    </div>
   </div>
 </div>
 
-<!-- 1. Cargar la librería de Puter.js (la magia ocurre aquí) -->
-<script src="https://js.puter.com/v2/"></script>
+<!-- Toast para notificaciones -->
+<div id="toast" class="toast-info"></div>
 
 <script>
   (function(){
     "use strict";
 
-    // --- Elementos del DOM ---
+    // -------------------- CONFIGURACIÓN INICIAL --------------------
+    const STORAGE_KEYS = {
+      HISTORY: 'chatia_pro_history',
+      MODEL: 'chatia_pro_model',
+      RAG_DOCS: 'chatia_pro_rag_docs'
+    };
+
+    // Estado global
+    let currentModel = localStorage.getItem(STORAGE_KEYS.MODEL) || 'gpt-4o-mini';
+    let conversationHistory = [];
+    let ragDocuments = []; // Array de { name, chunks, embeddings }
+    let useRag = false;
+    let isRecording = false;
+    let recognition = null;
+    let synth = window.speechSynthesis;
+    let speakingUtterance = null;
+
+    // Pipeline de embeddings (se inicializa bajo demanda)
+    let extractorPipeline = null;
+
+    // Elementos DOM
+    const configPanel = document.getElementById('configPanel');
+    const toggleConfigBtn = document.getElementById('toggleConfigBtn');
+    const modelSelect = document.getElementById('modelSelect');
+    const ragFileInput = document.getElementById('ragFileInput');
+    const ragStatus = document.getElementById('ragStatus');
+    const useRagCheckbox = document.getElementById('useRagCheckbox');
+    const clearRagBtn = document.getElementById('clearRagBtn');
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const memoryStatus = document.getElementById('memoryStatus');
+    const toast = document.getElementById('toast');
 
-    // --- Historial simple (solo para mantener el contexto en memoria) ---
-    let conversationHistory = [
-      { role: 'system', content: 'Eres un asistente útil, claro y conciso. Responde en español.' }
-    ];
+    // -------------------- FUNCIONES AUXILIARES --------------------
+    function showToast(text, duration = 3000) {
+      toast.textContent = text;
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, duration);
+    }
 
-    // --- Función para agregar mensajes al chat ---
-    function addMessage(role, content) {
+    // Cargar historial desde localStorage
+    function loadHistoryFromStorage() {
+      const stored = localStorage.getItem(STORAGE_KEYS.HISTORY);
+      if (stored) {
+        try {
+          conversationHistory = JSON.parse(stored);
+          // Reconstruir UI
+          rebuildChatFromHistory();
+          memoryStatus.innerHTML = '💾 Memoria cargada';
+          return;
+        } catch(e) {}
+      }
+      // Historia por defecto (con el prompt mejorado)
+      conversationHistory = [
+        { 
+          role: 'system', 
+          content: `Eres **ChatIA-Pro**, un asistente virtual avanzado, útil y con un toque de empatía.
+          
+**TU PERSONALIDAD Y ESTILO:**
+- **Tono**: Profesional pero cercano y amigable. Usa un lenguaje claro y directo.
+- **Precisión**: Ante la duda, es mejor decir "No tengo esa información" que inventar una respuesta.
+- **Estructura**: Para respuestas complejas, usa **listas**, *párrafos cortos* y emojis sutiles para mejorar la legibilidad.
+- **Idioma**: Responde **SIEMPRE** en español, a menos que se te pida explícitamente otro idioma.
+
+**TUS CAPACIDADES ESPECIALES:**
+1. **Razonamiento**: Antes de responder una pregunta difícil, puedes usar el formato "[Pensando: ...]" para mostrar tu lógica.
+2. **Creatividad**: Puedes generar ideas, escribir textos, poemas, guiones, etc.
+3. **Resolución de Problemas**: Ayudas con problemas matemáticos, de programación o lógica, explicando los pasos.`
+        },
+        { role: 'assistant', content: '¡Hola! Soy ChatIA-Pro, tu asistente mejorado. Tengo memoria persistente, puedo hablar por voz, usar documentos locales (RAG) y más. ¿En qué puedo ayudarte hoy?' }
+      ];
+      rebuildChatFromHistory();
+      memoryStatus.innerHTML = '💾 Nueva memoria';
+    }
+
+    // Reconstruir UI a partir del historial
+    function rebuildChatFromHistory() {
+      chatMessages.innerHTML = '';
+      conversationHistory.forEach(msg => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          addMessageToUI(msg.role, msg.content);
+        }
+      });
+    }
+
+    // Guardar historial en localStorage
+    function persistHistory() {
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(conversationHistory));
+      memoryStatus.innerHTML = '💾 Memoria guardada';
+    }
+
+    // Añadir mensaje a UI (con botones de acción)
+    function addMessageToUI(role, content) {
       const messageDiv = document.createElement('div');
       messageDiv.classList.add('message', role === 'user' ? 'user' : 'bot');
       
@@ -89,39 +501,186 @@
       bubble.classList.add('bubble');
       bubble.textContent = content;
       
+      // Acciones para burbujas del bot: copiar y leer en voz alta
+      if (role === 'assistant') {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.classList.add('bubble-actions');
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.classList.add('bubble-btn');
+        copyBtn.innerHTML = '📋 Copiar';
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(content).then(() => showToast('✅ Texto copiado'));
+        };
+        
+        const speakBtn = document.createElement('button');
+        speakBtn.classList.add('bubble-btn');
+        speakBtn.innerHTML = '🔊 Leer';
+        speakBtn.onclick = () => speakText(content);
+        
+        actionsDiv.appendChild(copyBtn);
+        actionsDiv.appendChild(speakBtn);
+        bubble.appendChild(actionsDiv);
+      } else {
+        // Para usuario, solo copiar opcional (pero no lo ponemos para no recargar)
+      }
+      
       messageDiv.appendChild(avatar);
       messageDiv.appendChild(bubble);
       chatMessages.appendChild(messageDiv);
-      
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // --- Función para limpiar el chat ---
-    function clearChat() {
-      conversationHistory = [
-        { role: 'system', content: 'Eres un asistente útil, claro y conciso. Responde en español.' }
-      ];
-      chatMessages.innerHTML = '';
-      addMessage('bot', 'Chat limpio. ¿En qué puedo ayudarte?');
+    // Síntesis de voz
+    function speakText(text) {
+      if (!synth) {
+        showToast('Tu navegador no soporta síntesis de voz', 2000);
+        return;
+      }
+      // Cancelar cualquier lectura en curso
+      if (speakingUtterance) {
+        synth.cancel();
+      }
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.rate = 1.0;
+      speakingUtterance = utterance;
+      utterance.onend = () => { speakingUtterance = null; };
+      synth.speak(utterance);
     }
 
-    // --- Función principal para enviar mensajes ---
+    // -------------------- RAG: Carga y búsqueda local --------------------
+    async function initEmbeddingPipeline() {
+      if (!extractorPipeline) {
+        showToast('Cargando modelo de embeddings... (solo primera vez)', 2000);
+        extractorPipeline = await window.transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        showToast('Modelo de embeddings listo', 1500);
+      }
+      return extractorPipeline;
+    }
+
+    async function processFiles(files) {
+      const pipeline = await initEmbeddingPipeline();
+      ragStatus.textContent = 'Procesando documentos...';
+      
+      for (const file of files) {
+        try {
+          let text = '';
+          if (file.type === 'application/pdf') {
+            // PDF requiere librería extra; para simplificar usamos pdf.js de forma dinámica
+            // Si no está disponible, mostramos advertencia.
+            if (typeof pdfjsLib === 'undefined') {
+              // Cargar dinámicamente PDF.js
+              await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js');
+            }
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              const pageText = content.items.map(item => item.str).join(' ');
+              fullText += pageText + '\n';
+            }
+            text = fullText;
+          } else {
+            text = await file.text();
+          }
+          
+          // Dividir en chunks de ~300 palabras
+          const words = text.split(/\s+/);
+          const chunkSize = 300;
+          const chunks = [];
+          for (let i = 0; i < words.length; i += chunkSize) {
+            chunks.push(words.slice(i, i + chunkSize).join(' '));
+          }
+          
+          // Generar embeddings para cada chunk
+          const embeddings = [];
+          for (const chunk of chunks) {
+            const output = await pipeline(chunk, { pooling: 'mean', normalize: true });
+            embeddings.push(Array.from(output.data));
+          }
+          
+          ragDocuments.push({
+            name: file.name,
+            chunks: chunks,
+            embeddings: embeddings
+          });
+        } catch(e) {
+          console.error('Error procesando', file.name, e);
+          showToast(`Error con ${file.name}: ${e.message}`, 4000);
+        }
+      }
+      
+      updateRagStatus();
+      // Guardar documentos en localStorage (sin embeddings por tamaño, solo metadata)
+      // Los embeddings se regenerarán al recargar si es necesario, pero por simplicidad no persistimos embeddings.
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    function updateRagStatus() {
+      if (ragDocuments.length === 0) {
+        ragStatus.textContent = 'No hay documentos cargados.';
+      } else {
+        const totalChunks = ragDocuments.reduce((sum, doc) => sum + doc.chunks.length, 0);
+        ragStatus.textContent = `${ragDocuments.length} documento(s) cargado(s) · ${totalChunks} fragmentos.`;
+      }
+    }
+
+    async function searchRelevantChunks(query, topK = 3) {
+      if (ragDocuments.length === 0) return [];
+      const pipeline = await initEmbeddingPipeline();
+      const queryEmbedding = await pipeline(query, { pooling: 'mean', normalize: true });
+      const queryVec = Array.from(queryEmbedding.data);
+      
+      const results = [];
+      ragDocuments.forEach(doc => {
+        doc.embeddings.forEach((emb, idx) => {
+          const similarity = cosineSimilarity(queryVec, emb);
+          results.push({ docName: doc.name, chunk: doc.chunks[idx], similarity });
+        });
+      });
+      
+      results.sort((a, b) => b.similarity - a.similarity);
+      return results.slice(0, topK);
+    }
+
+    function cosineSimilarity(vecA, vecB) {
+      let dot = 0, normA = 0, normB = 0;
+      for (let i = 0; i < vecA.length; i++) {
+        dot += vecA[i] * vecB[i];
+        normA += vecA[i] * vecA[i];
+        normB += vecB[i] * vecB[i];
+      }
+      return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    // -------------------- CHAT PRINCIPAL --------------------
     async function sendMessage() {
       const userMessage = userInput.value.trim();
       if (!userMessage) return;
 
-      // Deshabilitar input y botón mientras se procesa
       userInput.disabled = true;
       sendBtn.disabled = true;
 
-      // Mostrar mensaje del usuario
-      addMessage('user', userMessage);
+      // Añadir a UI e historial
+      addMessageToUI('user', userMessage);
       conversationHistory.push({ role: 'user', content: userMessage });
-      
       userInput.value = '';
       userInput.style.height = 'auto';
+      persistHistory();
 
-      // Mostrar indicador "escribiendo..."
+      // Mostrar typing
       const typingId = 'typing-' + Date.now();
       const typingDiv = document.createElement('div');
       typingDiv.id = typingId;
@@ -131,61 +690,183 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
       try {
-        // ⚡ La conexión con la IA: simple y directa con Puter.js
-        //    No necesita API Key. Solo requiere la librería que ya cargamos.
-        const response = await puter.ai.chat(userMessage, {
-            model: 'gpt-4o-mini', // Modelo rápido y gratuito (también puedes usar 'gpt-4.1-nano' o 'claude-haiku-3.5')
-            // system_prompt: "Eres un asistente útil, claro y conciso. Responde en español." // Opcional
+        let contextPrompt = '';
+        if (useRag && ragDocuments.length > 0) {
+          const relevant = await searchRelevantChunks(userMessage, 2);
+          if (relevant.length > 0) {
+            contextPrompt = 'Información relevante de tus documentos:\n' + 
+              relevant.map(r => `[Fuente: ${r.docName}]: ${r.chunk}`).join('\n\n') + 
+              '\n\nBasándote en esta información y en tu conocimiento, responde a la siguiente pregunta:\n';
+          }
+        }
+
+        const fullPrompt = contextPrompt + userMessage;
+        
+        // Llamada a Puter.ai
+        const response = await puter.ai.chat(fullPrompt, {
+          model: currentModel,
         });
 
-        // Eliminar indicador "escribiendo..."
         const typingElement = document.getElementById(typingId);
         if (typingElement) typingElement.remove();
 
-        // Extraer la respuesta (la estructura puede variar, esta es la más común)
         let botReply = response;
         if (response && typeof response === 'object') {
-          // Intenta extraer el texto de diferentes formatos posibles
           botReply = response.message?.content || response.text || response.toString();
         }
         
-        // Mostrar respuesta del bot
-        addMessage('bot', botReply);
+        addMessageToUI('assistant', botReply);
         conversationHistory.push({ role: 'assistant', content: botReply });
+        persistHistory();
 
       } catch (error) {
-        console.error('Error al llamar a la IA:', error);
-        
+        console.error(error);
         const typingEl = document.getElementById(typingId);
         if (typingEl) typingEl.remove();
-        
-        addMessage('bot', '❌ Lo siento, hubo un error al conectar con la IA. Por favor, inténtalo de nuevo en unos segundos.');
+        addMessageToUI('assistant', '❌ Error al conectar con la IA. Intenta de nuevo.');
+        conversationHistory.push({ role: 'assistant', content: '❌ Error al conectar con la IA. Intenta de nuevo.' });
+        persistHistory();
       } finally {
-        // Re-habilitar input y botón
         userInput.disabled = false;
         sendBtn.disabled = false;
         userInput.focus();
       }
     }
 
-    // --- Auto-ajustar altura del textarea ---
+    // -------------------- RECONOCIMIENTO DE VOZ --------------------
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        micBtn.style.display = 'none';
+        return;
+      }
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'es-ES';
+
+      recognition.onstart = () => {
+        isRecording = true;
+        micBtn.classList.add('recording');
+        micBtn.textContent = '⏺️';
+      };
+      recognition.onend = () => {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        micBtn.textContent = '🎤';
+      };
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value = transcript;
+        autoResizeTextarea();
+        sendMessage(); // Enviar automáticamente
+      };
+      recognition.onerror = (event) => {
+        showToast('Error de micrófono: ' + event.error, 3000);
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        micBtn.textContent = '🎤';
+      };
+    }
+
+    function toggleRecording() {
+      if (!recognition) {
+        showToast('Reconocimiento de voz no soportado', 2000);
+        return;
+      }
+      if (isRecording) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    }
+
+    // -------------------- UTILIDADES UI --------------------
     function autoResizeTextarea() {
       userInput.style.height = 'auto';
       userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
     }
 
-    // --- EVENT LISTENERS ---
-    sendBtn.addEventListener('click', sendMessage);
-    
-    userInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
+    function clearChatUIOnly() {
+      // Mantener historial pero limpiar pantalla
+      chatMessages.innerHTML = '';
+      conversationHistory.forEach(msg => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          addMessageToUI(msg.role, msg.content);
+        }
+      });
+    }
+
+    function startNewChat() {
+      if (confirm('¿Empezar una nueva conversación? Se perderá el historial actual.')) {
+        conversationHistory = [
+          conversationHistory.find(m => m.role === 'system') || { role: 'system', content: 'Eres un asistente útil.' },
+          { role: 'assistant', content: '¡Hola! Soy ChatIA-Pro. ¿En qué puedo ayudarte?' }
+        ];
+        rebuildChatFromHistory();
+        persistHistory();
+        showToast('✨ Nueva conversación iniciada');
       }
-    });
-    
-    userInput.addEventListener('input', autoResizeTextarea);
-    clearChatBtn.addEventListener('click', clearChat);
+    }
+
+    // -------------------- INICIALIZACIÓN --------------------
+    function init() {
+      modelSelect.value = currentModel;
+      loadHistoryFromStorage();
+      
+      // Event listeners
+      toggleConfigBtn.addEventListener('click', () => configPanel.classList.toggle('visible'));
+      modelSelect.addEventListener('change', (e) => {
+        currentModel = e.target.value;
+        localStorage.setItem(STORAGE_KEYS.MODEL, currentModel);
+        showToast(`Modelo cambiado a ${currentModel}`);
+      });
+      
+      ragFileInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+          await processFiles(files);
+          ragFileInput.value = '';
+        }
+      });
+      
+      useRagCheckbox.addEventListener('change', (e) => {
+        useRag = e.target.checked;
+        showToast(useRag ? 'RAG activado' : 'RAG desactivado');
+      });
+      
+      clearRagBtn.addEventListener('click', () => {
+        ragDocuments = [];
+        updateRagStatus();
+        showToast('Documentos limpiados');
+      });
+      
+      sendBtn.addEventListener('click', sendMessage);
+      userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      userInput.addEventListener('input', autoResizeTextarea);
+      
+      micBtn.addEventListener('click', toggleRecording);
+      initSpeechRecognition();
+      
+      clearChatBtn.addEventListener('click', () => {
+        clearChatUIOnly();
+        showToast('Vista limpiada (memoria intacta)');
+      });
+      
+      newChatBtn.addEventListener('click', startNewChat);
+      
+      // Cargar PDF.js dinámicamente si no está
+      if (typeof pdfjsLib === 'undefined') {
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js').catch(console.warn);
+      }
+    }
+
+    init();
   })();
 </script>
 </body>
