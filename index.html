@@ -202,8 +202,9 @@
     });
 
 async function fetchAIResponse(prompt) {
-    // CAMBIO CLAVE: Usamos 'v1' en lugar de 'v1beta' y el nombre de modelo estándar
-    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // URL DEFINITIVA: Usamos v1beta (que es la que soporta Flash actualmente) 
+    // pero con el endpoint corregido.
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
     
     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
 
@@ -211,22 +212,28 @@ async function fetchAIResponse(prompt) {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: chatHistory })
+            body: JSON.stringify({ 
+                contents: chatHistory 
+            })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            // Si el error es por la API Key, aquí te lo dirá claramente en la consola
-            throw new Error(errorData.error.message || "Error en la API");
+        const data = await response.json();
+
+        // Si hay un error en la respuesta (como API Key inválida o cuota superada)
+        if (data.error) {
+            throw new Error(data.error.message);
         }
 
-        const data = await response.json();
-        const aiText = data.candidates[0].content.parts[0].text;
-        chatHistory.push({ role: "model", parts: [{ text: aiText }] });
-        return aiText;
+        if (data.candidates && data.candidates[0].content) {
+            const aiText = data.candidates[0].content.parts[0].text;
+            chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+            return aiText;
+        } else {
+            throw new Error("La IA no devolvió una respuesta válida.");
+        }
 
     } catch (error) {
-        console.error("Detalle:", error);
+        console.error("Error completo:", error);
         return "Error: " + error.message;
     }
 }
